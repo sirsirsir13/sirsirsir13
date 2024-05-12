@@ -1,0 +1,127 @@
+#include<stdio.h>
+#include<iostream>
+#include<string>
+using namespace std;
+
+class Process//进程类
+{
+public:
+	string m_ProcessID;//进程号
+	double m_CreationTime;//创建时间
+	double m_ExecutionTime;//执行时间
+	double m_StartTime;//开始时间
+	double m_CompletionTime();//完成时间
+	double m_TurnaroundTime();//周转时间
+};
+double Process::m_CompletionTime()// 在创建时得到 完成时间 = 开始时间 + 执行时间
+{
+	return this->m_StartTime + this->m_ExecutionTime;
+}
+
+double Process::m_TurnaroundTime()// 周转时间 = 完成时间 - 创建时间
+{
+	return this->m_CompletionTime() - this->m_CreationTime;
+}
+void addProcess(ProcessBook* pb)//添加进程
+{
+	int n,CreationTime, ExecutionTime;
+	scanf("进程数为=%d", &n);
+	for (int i = 1; i < n; i++)
+	{
+		printf("请输入第%d个进程的创建时间:CreationTime", i);
+		scanf("%d", &CreationTime);
+		printf("请输入第%d个进程的执行时间:ExecutionTime", i);
+		scanf("%d", &ExecutionTime);
+	}
+}
+	void executionTimeSort(ProcessBook * pb)//排序算法
+	{
+		// 冒泡排序
+		for (int i = 0; i < pb->m_ProcessCount - 1; i++)
+		{ // 按进程创建、执行时间进行升序排序 
+			//1.这段是先排序出创建第一个排序队列：创建时间从小到大的队列
+			for (int j = i + 1; j < pb->m_ProcessCount; j++) 	
+			{
+				if (pb->m_ProcessArray[i].m_CreationTime > pb->m_ProcessArray[j].m_CreationTime
+					|| (pb->m_ProcessArray[i].m_CreationTime == pb->m_ProcessArray[j].m_CreationTime
+						&& pb->m_ProcessArray[i].m_ExecutionTime > pb->m_ProcessArray[j].m_ExecutionTime))
+				{
+					Process temp = pb->m_ProcessArray[i]; // 交换i，j对应元素的顺序 
+					pb->m_ProcessArray[i] = pb->m_ProcessArray[j];
+					pb->m_ProcessArray[j] = temp;
+				}
+			}
+		}
+		for (int i = 0; i < pb->m_ProcessCount - 1; i++) 
+		{
+			if (i == 0)
+			{ // 由于排序后第一个进程的创建时间最短 所以创建时间就是开始时间 
+				pb->m_ProcessArray[i].m_StartTime = pb->m_ProcessArray[i].m_CreationTime;
+			}
+			else
+			{ 
+				if (pb->m_ProcessArray[i - 1].m_CompletionTime() >= pb->m_ProcessArray[i].m_CreationTime)
+				{
+					pb->m_ProcessArray[i].m_StartTime = pb->m_ProcessArray[i - 1].m_CompletionTime();
+				}
+				else
+				{
+					pb->m_ProcessArray[i].m_StartTime = pb->m_ProcessArray[i].m_CreationTime;
+				}
+			}
+			// 第一步：找到进程pb->m_ProcessCount[i]完成时有哪些进程已创建 
+			int count = 0; 
+			for (int j = i + 1; j < pb->m_ProcessCount; j++)
+			{
+				if (pb->m_ProcessArray[j].m_CreationTime <= pb->m_ProcessArray[i].m_CompletionTime())
+				{
+					count++;
+				}
+				else
+				{
+					break;
+				}
+			}
+			// 第二步：在已创建的进程中找到执行时间最短的进程 
+			double min = pb->m_ProcessArray[i + 1].m_ExecutionTime;	
+			int next = i + 1;
+			for (int k = i + 1; k < i + count; k++)
+			{
+				if (pb->m_ProcessArray[k + 1].m_ExecutionTime < min)
+				{ 
+					min = pb->m_ProcessArray[k + 1].m_ExecutionTime;
+					next = k + 1;
+				}
+			}
+			Process temp = pb->m_ProcessArray[i + 1];
+			pb->m_ProcessArray[i + 1] = pb->m_ProcessArray[next];
+			pb->m_ProcessArray[next] = temp;
+		}
+	}
+
+			void SJF(ProcessBook * pb)//短作业优先调度
+			{
+				executionTimeSort(pb);
+				for (int i = 0; i < pb->m_ProcessCount; i++)
+				{
+					if (i == 0)
+					{
+						pb->m_ProcessArray[i].m_StartTime = pb->m_ProcessArray[i].m_CreationTime;//第一个进程 开始时间赋值为创建时间
+					}
+					else
+					{
+						if (pb->m_ProcessArray[i - 1].m_CompletionTime() >= pb->m_ProcessArray[i].m_CreationTime)//如果排序后前一个进程完成时间比后一个进程的创建时间后
+						{
+							pb->m_ProcessArray[i].m_StartTime = pb->m_ProcessArray[i - 1].m_CompletionTime();//将后一个进程的开始时间赋值为前一个进程的完成时间
+						}
+						else
+						{
+							pb->m_ProcessArray[i].m_StartTime = pb->m_ProcessArray[i].m_CreationTime;//否则将后一个进程的开始时间赋值为创建时间
+						}
+					}
+				}
+				showResult(pb);
+				cout << endl;
+				system("pause");
+				system("cls");
+			}
